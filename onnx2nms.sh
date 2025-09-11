@@ -1,19 +1,21 @@
 # #!/bin/bash
-# # 使用方法: ./onnx2nms.sh /home/scy/train/exps/nofar/hbb_fire-smoke_cls2/hbb_fire-smoke_cls2_v0.5.0
+# # 使用方法: ./onnx2nms.sh <base_dir> <numcls>
+# # 示例:   ./onnx2nms.sh /home/scy/train/exps/nofar/hbb_fire-smoke_cls2/hbb_fire-smoke_cls2_v0.5.0 6
 
 # BASE_DIR="$1"
-# NUMCLS=6
+# NUMCLS="$2"
 # KEEP_TOPK=300
 
 # POSTPROCESS_SCRIPT="/home/scy/train/LorenzoDeploy/cv_detection/nvidia/yoloe2e/v2/python/yolov8/yolov8_add_postprocess.py"
 # NMS_SCRIPT="/home/scy/train/LorenzoDeploy/cv_detection/nvidia/yoloe2e/v2/python/yolov8/yolov8_add_nms.py"
 
-# if [ -z "$BASE_DIR" ]; then
-#     echo "Usage: $0 <base_dir>"
+# if [ -z "$BASE_DIR" ] || [ -z "$NUMCLS" ]; then
+#     echo "Usage: $0 <base_dir> <numcls>"
 #     exit 1
 # fi
 
 # echo "Start ONNX -> _1.onnx & _1_nms.onnx in $BASE_DIR ..."
+# echo "Number of classes = $NUMCLS"
 
 # for dir in "$BASE_DIR"/*/; do
 #     dir="${dir%/}"
@@ -23,7 +25,7 @@
 #     for onnx_file in "$weights_dir/"*.onnx; do
 #         [ -f "$onnx_file" ] || continue
 
-#         # 提取 batch 信息
+#         # 提取 batch 信息（如果文件名里有 _bXX）
 #         batch=$(basename "$onnx_file" | sed -r "s/.*_b([0-9]+)\.onnx/\1/")
 
 #         # Step 1: Postprocess -> _1.onnx
@@ -69,46 +71,32 @@
 
 #!/bin/bash
 # 使用方法:
-#   1) ./onnx2nms.sh <base_dir>
-#   2) ./onnx2nms.sh <base_dir> <output_dir>
+#   ./onnx2nms.sh <base_dir> <numcls>
 
 BASE_DIR="$1"
-OUTPUT_DIR="$2"
+NUMCLS="$2"
 
-NUMCLS=2
 KEEP_TOPK=300
 
 POSTPROCESS_SCRIPT="/home/scy/train/LorenzoDeploy/cv_detection/nvidia/yoloe2e/v2/python/yolov8/yolov8_add_postprocess.py"
 NMS_SCRIPT="/home/scy/train/LorenzoDeploy/cv_detection/nvidia/yoloe2e/v2/python/yolov8/yolov8_add_nms.py"
-# POSTPROCESS_SCRIPT="/home/scy/train/LorenzoDeploy/cv_detection/nvidia/yoloe2e/v2/python/yolov8/yolov8_obb_add_postprocess.py"
-# NMS_SCRIPT="/home/scy/train/LorenzoDeploy/cv_detection/nvidia/yoloe2e/v2/python/yolov8/yolov8_obb_add_nms.py"
 
-if [ -z "$BASE_DIR" ]; then
-    echo "Usage: $0 <base_dir> [output_dir]"
+
+if [ -z "$BASE_DIR" ] || [ -z "$NUMCLS" ]; then
+    echo "Usage: $0 <base_dir> <numcls>"
     exit 1
 fi
 
-if [ -n "$OUTPUT_DIR" ]; then
-    mkdir -p "$OUTPUT_DIR"
-    echo "ONNX outputs will be saved to: $OUTPUT_DIR"
-else
-    echo "ONNX outputs will be saved to the same dir as input ONNX files"
-fi
-
 echo "Start ONNX -> _1.onnx & _1_nms.onnx in $BASE_DIR ..."
+echo "Number of classes = $NUMCLS"
 
 # 遍历 BASE_DIR 下所有子目录（递归）
 find "$BASE_DIR" -type f -name "*.onnx" | while read -r onnx_file; do
     model_name=$(basename "$onnx_file" .onnx)
+    dir_name=$(dirname "$onnx_file")
 
-    # 如果指定了输出目录，则放到 OUTPUT_DIR，否则放到 onnx 同级目录
-    if [ -n "$OUTPUT_DIR" ]; then
-        post_onnx="$OUTPUT_DIR/${model_name}_1.onnx"
-        nms_onnx="$OUTPUT_DIR/${model_name}_1_nms.onnx"
-    else
-        post_onnx="$(dirname "$onnx_file")/${model_name}_1.onnx"
-        nms_onnx="$(dirname "$onnx_file")/${model_name}_1_nms.onnx"
-    fi
+    post_onnx="$dir_name/${model_name}_1.onnx"
+    nms_onnx="$dir_name/${model_name}_1_nms.onnx"
 
     # Step 1: Postprocess -> _1.onnx
     if [ ! -f "$post_onnx" ]; then
@@ -142,3 +130,4 @@ find "$BASE_DIR" -type f -name "*.onnx" | while read -r onnx_file; do
 done
 
 echo "🎉 All ONNX -> _1.onnx & _1_nms.onnx done!"
+
