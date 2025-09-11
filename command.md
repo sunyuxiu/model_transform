@@ -1,0 +1,1 @@
+./trtexec --onnx=/home/scy/train/exps/nofar/person_attribute/person_attribute_v0.1.4/model8_b32m_20250625_person_attribute_v0.1.4/weights/best_1_nms.onnx    --saveEngine=/home/scy/train/exps/nofar/person_attribute/person_attribute_v0.1.4/model8_b32m_20250625_person_attribute_v0.1.4/weights/best_1_nms.bin --workspace=9000 --verbose
