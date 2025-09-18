@@ -1,4 +1,4 @@
-#!/bin/bash
+# !/bin/bash
 # # 使用方法: ./pt2onnx.sh /home/scy/train/exps/nofar/hbb_fire-smoke_cls2/hbb_fire-smoke_cls2_v0.5.0
 
 # BASE_DIR="$1"
